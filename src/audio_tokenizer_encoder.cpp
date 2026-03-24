@@ -2,7 +2,13 @@
 #include "gguf_loader.h"
 #include "ggml-cpu.h"
 
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES
+#endif
 #include <cmath>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include <cstring>
 #include <algorithm>
 #include <numeric>

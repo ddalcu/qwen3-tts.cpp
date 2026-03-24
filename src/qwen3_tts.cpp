@@ -11,7 +11,13 @@
 
 #ifdef __APPLE__
 #include <mach/mach.h>
-#elif !defined(_WIN32)
+#elif defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <psapi.h>
+#pragma comment(lib, "psapi.lib")
+#else
 #include <sys/resource.h>
 #endif
 
@@ -47,9 +53,14 @@ static bool get_process_memory_snapshot(process_memory_snapshot & out) {
     }
     return true;
 #elif defined(_WIN32)
-    out.rss_bytes = 0;
-    out.phys_footprint_bytes = 0;
-    return false;
+    PROCESS_MEMORY_COUNTERS pmc{};
+    pmc.cb = sizeof(pmc);
+    if (!GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
+        return false;
+    }
+    out.rss_bytes = (uint64_t) pmc.WorkingSetSize;
+    out.phys_footprint_bytes = out.rss_bytes;
+    return true;
 #else
     struct rusage usage = {};
     if (getrusage(RUSAGE_SELF, &usage) != 0) {
